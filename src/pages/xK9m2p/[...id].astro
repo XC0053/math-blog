@@ -12,6 +12,7 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const topic = post.data.topic;
 ---
 <html lang="en">
 <head>
@@ -26,7 +27,15 @@ const { Content } = await render(post);
   />
 </head>
 <body>
-  <nav><a href="/xK9m2p/">&larr; All notes</a></nav>
+  <nav class="breadcrumb">
+    <a href="/xK9m2p/">Home</a>
+    {topic && (
+      <>
+        <span class="sep">/</span>
+        <a href={`/xK9m2p/topics/${topic}`}>{topic}</a>
+      </>
+    )}
+  </nav>
   <article>
     <h1>{post.data.title}</h1>
     <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>

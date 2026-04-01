@@ -47,6 +47,16 @@ nav {
   font-size: 0.9rem;
 }
 
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.breadcrumb .sep {
+  color: #ccc;
+}
+
 article {
   margin-top: 1rem;
 }

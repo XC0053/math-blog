@@ -3,6 +3,7 @@ title: "Hello, LaTeX"
 description: "A sample post demonstrating math rendering"
 pubDate: 2026-04-01
 tags: ["math", "demo"]
+topic: "Examples"
 ---
 
 This is a sample post to verify that LaTeX rendering works.
