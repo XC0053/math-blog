@@ -2,43 +2,54 @@ import { defineConfig } from "astro/config";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
-// Convert Obsidian ![[image.png]] and ![[image.png|width]] to standard markdown
-function remarkObsidianImages() {
-  return function (tree) {
+// Convert Obsidian ![[image.png]] and ![[image.png|width]] in raw text to <img>
+// Must run as a rehype plugin to catch cases where remark already parsed ![[ into broken nodes
+function rehypeObsidianImages() {
+  return function (tree, file) {
+    const srcPath = file.history && file.history[0] ? file.history[0] : "";
+    const blogMatch = srcPath.match(/[/\\]blog[/\\](.+)[/\\]/);
+    const imgBase = blogMatch ? "/images/" + blogMatch[1].replace(/\\/g, "/") : "";
+
     const visit = function (node) {
       if (node.children) {
         const newChildren = [];
         for (const child of node.children) {
+          // Handle text nodes containing Obsidian image syntax
           if (child.type === "text") {
             const regex = /!\[\[([^\]|]+)(?:\|(\d+))?\]\]/g;
             let lastIndex = 0;
             let match;
-            const parts = [];
+            let found = false;
             while ((match = regex.exec(child.value)) !== null) {
+              found = true;
               if (match.index > lastIndex) {
-                parts.push({ type: "text", value: child.value.slice(lastIndex, match.index) });
+                newChildren.push({ type: "text", value: child.value.slice(lastIndex, match.index) });
               }
-              if (match[2]) {
-                parts.push({
-                  type: "html",
-                  value: '<img src="' + match[1] + '" alt="" width="' + match[2] + '" style="max-width:100%;height:auto;display:block;margin:1.5rem 0" />',
-                });
-              } else {
-                parts.push({ type: "image", url: match[1], alt: "" });
-              }
+              const imgSrc = imgBase ? imgBase + "/" + match[1] : match[1];
+              const widthAttr = match[2] ? ' width="' + match[2] + '"' : "";
+              newChildren.push({
+                type: "element",
+                tagName: "img",
+                properties: {
+                  src: imgSrc,
+                  alt: "",
+                  style: "max-width:100%;height:auto;display:block;margin:1.5rem 0",
+                  ...(match[2] ? { width: match[2] } : {}),
+                },
+                children: [],
+              });
               lastIndex = regex.lastIndex;
             }
-            if (lastIndex > 0) {
+            if (found) {
               if (lastIndex < child.value.length) {
-                parts.push({ type: "text", value: child.value.slice(lastIndex) });
+                newChildren.push({ type: "text", value: child.value.slice(lastIndex) });
               }
-              for (const p of parts) newChildren.push(p);
               continue;
             }
-          }
-          // Convert [[wikilink]] to plain text
-          if (child.type === "text" && /\[\[([^\]]+)\]\]/.test(child.value)) {
-            child.value = child.value.replace(/\[\[([^\]]+)\]\]/g, "$1");
+            // Convert [[wikilink]] to plain text
+            if (/\[\[([^\]]+)\]\]/.test(child.value)) {
+              child.value = child.value.replace(/\[\[([^\]]+)\]\]/g, "$1");
+            }
           }
           visit(child);
           newChildren.push(child);
@@ -53,7 +64,7 @@ function remarkObsidianImages() {
 export default defineConfig({
   site: "https://chenxr.cloud",
   markdown: {
-    remarkPlugins: [remarkMath, remarkObsidianImages],
-    rehypePlugins: [rehypeKatex],
+    remarkPlugins: [remarkMath],
+    rehypePlugins: [rehypeKatex, rehypeObsidianImages],
   },
 });

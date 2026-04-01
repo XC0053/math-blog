@@ -22,7 +22,8 @@
       "Bash(git config:*)",
       "Bash(git:*)",
       "Bash(cp:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(ls:*)"
     ]
   }
 }
