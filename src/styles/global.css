@@ -226,3 +226,35 @@ blockquote {
   body { padding: 1rem; }
   .post-list a { flex-direction: column; gap: 0; }
 }
+
+/* Landing page */
+.landing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.landing-card {
+  text-align: center;
+  max-width: 28rem;
+}
+
+.landing-card h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.landing-card p {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.landing-email {
+  margin-top: 0.8rem;
+}
+
+.landing-email a {
+  font-size: 1rem;
+  font-weight: 500;
+}
