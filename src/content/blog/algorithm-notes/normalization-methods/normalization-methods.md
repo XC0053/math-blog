@@ -1,3 +1,10 @@
+---
+title: "LayerNorm vs RMSNorm"
+description: "Comparison of Layer Normalization and RMS Normalization"
+pubDate: 2026-04-01
+topic: "Algorithm Notes"
+---
+
 # LayerNorm v.s. RMSNorm
 **LayerNorm** 在 Attention 结构中，对计算得到的 Attention 矩阵进行 row-wise 的层归一化，其目的将 token 的“注意力embedding” re-centering 和 re-scaling，保证不同的token 处在同一个 embedding 空间中。
 具体计算过程是

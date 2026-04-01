@@ -1,3 +1,10 @@
+---
+title: "Transformer"
+description: "Self-Attention, Multi-Head Attention and positional encoding"
+pubDate: 2026-04-01
+topic: "Algorithm Notes"
+---
+
 # Attention
 ### Self-Attention
 ![[Transformer_figure_01.png|140]]
