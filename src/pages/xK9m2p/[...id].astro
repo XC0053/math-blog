@@ -1,0 +1,45 @@
+---
+import { getCollection, render } from "astro:content";
+import "../../styles/global.css";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{post.data.title}</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    integrity="sha384-nB0miv6/jRmo5YADFPFLBkkgI8WJ0wMujEJ4S1d3FDq+6L5RQwQnU7oXfn6523D3"
+    crossorigin="anonymous"
+  />
+</head>
+<body>
+  <nav><a href="/xK9m2p/">&larr; All notes</a></nav>
+  <article>
+    <h1>{post.data.title}</h1>
+    <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>
+      {post.data.pubDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+    </time>
+    {post.data.tags && (
+      <div class="tags">
+        {post.data.tags.map((tag: string) => (
+          <span class="tag">{tag}</span>
+        ))}
+      </div>
+    )}
+    <Content />
+  </article>
+</body>
+</html>
