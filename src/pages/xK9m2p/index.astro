@@ -5,26 +5,73 @@ import "../../styles/global.css";
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
+
+// Extract all unique tags
+const allTags = [...new Set(posts.flatMap((p) => p.data.tags ?? []))].sort();
 ---
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Math Notes</title>
+  <title>Xiaorui's Blog</title>
 </head>
 <body>
-  <h1>Math Notes</h1>
-  <ul class="post-list">
+  <header class="hero">
+    <img src="/banner.svg" alt="" class="hero-banner" />
+    <h1>Xiaorui's Blog</h1>
+    <p class="subtitle">{posts.length} notes</p>
+  </header>
+
+  <!-- Tag filter bar -->
+  <nav class="tag-filter">
+    <button class="tag-btn active" data-tag="all">All</button>
+    {allTags.map((tag) => (
+      <button class="tag-btn" data-tag={tag}>{tag}</button>
+    ))}
+  </nav>
+
+  <!-- Post grid -->
+  <div class="post-grid">
     {posts.map((post) => (
-      <li>
-        <a href={`/xK9m2p/${post.id}`}>
+      <a class="post-card" href={`/xK9m2p/${post.id}`} data-tags={JSON.stringify(post.data.tags ?? [])}>
+        <div class="post-card-title">{post.data.title}</div>
+        {post.data.description && (
+          <div class="post-card-desc">{post.data.description}</div>
+        )}
+        <div class="post-card-meta">
           <time datetime={post.data.pubDate.toISOString().slice(0, 10)}>
             {post.data.pubDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
           </time>
-          <span>{post.data.title}</span>
-        </a>
-      </li>
+          {(post.data.tags ?? []).map((tag: string) => (
+            <span class="tag">{tag}</span>
+          ))}
+        </div>
+      </a>
     ))}
-  </ul>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
+    const cards = document.querySelectorAll<HTMLElement>(".post-card");
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // Update active button
+        buttons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const tag = btn.dataset.tag;
+
+        cards.forEach((card) => {
+          if (tag === "all") {
+            card.style.display = "";
+          } else {
+            const cardTags: string[] = JSON.parse(card.dataset.tags ?? "[]");
+            card.style.display = cardTags.includes(tag!) ? "" : "none";
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
