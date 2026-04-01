@@ -20,7 +20,9 @@
       "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
       "Bash(gh repo:*)",
       "Bash(git config:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(cp:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
