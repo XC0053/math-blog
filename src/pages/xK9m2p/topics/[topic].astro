@@ -13,8 +13,11 @@ export async function getStaticPaths() {
     topicMap.get(topic)!.push(post);
   });
 
+  const slugify = (text: string) =>
+    text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
   return [...topicMap.entries()].map(([topic, topicPosts]) => ({
-    params: { topic },
+    params: { topic: slugify(topic) },
     props: {
       topic,
       posts: topicPosts.sort(

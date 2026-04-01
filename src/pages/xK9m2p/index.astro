@@ -14,6 +14,10 @@ posts.forEach((post) => {
   topicMap.get(topic)!.push(post);
 });
 const topics = [...topicMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+function slugify(text: string) {
+  return text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
 ---
 <html lang="en">
 <head>
@@ -31,7 +35,7 @@ const topics = [...topicMap.entries()].sort(([a], [b]) => a.localeCompare(b));
   <!-- Topic grid -->
   <div class="post-grid">
     {topics.map(([topic, topicPosts]) => (
-      <a class="post-card" href={`/xK9m2p/topics/${topic}`}>
+      <a class="post-card" href={`/xK9m2p/topics/${slugify(topic)}`}>
         <div class="post-card-title">{topic}</div>
         <div class="post-card-desc">{topicPosts.length} notes</div>
       </a>

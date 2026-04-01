@@ -13,6 +13,7 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const topic = post.data.topic;
+const topicSlug = topic ? topic.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") : "";
 ---
 <html lang="en">
 <head>
@@ -32,7 +33,7 @@ const topic = post.data.topic;
     {topic && (
       <>
         <span class="sep">/</span>
-        <a href={`/xK9m2p/topics/${topic}`}>{topic}</a>
+        <a href={`/xK9m2p/topics/${topicSlug}`}>{topic}</a>
       </>
     )}
   </nav>
