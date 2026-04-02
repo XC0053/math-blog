@@ -2,6 +2,8 @@ import { defineConfig } from "astro/config";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
+import cloudflare from "@astrojs/cloudflare";
+
 // Convert Obsidian ![[image.png]] and ![[image.png|width]] in raw text to <img>
 // Must run as a rehype plugin to catch cases where remark already parsed ![[ into broken nodes
 function rehypeObsidianImages() {
@@ -63,8 +65,11 @@ function rehypeObsidianImages() {
 
 export default defineConfig({
   site: "https://chenxr.cloud",
+
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex, rehypeObsidianImages],
   },
+
+  adapter: cloudflare()
 });
