@@ -33,10 +33,10 @@ $$\text{Attention}(Q,K,V) =\text{softmax}\left(\frac{QK^{\top}}{\sqrt{d_k}}\righ
 - 并行注意力计算：每个头独自计算自注意力 $\text{head}_i=\text{Attention}(Q_i,K_i,V_i)$，得到注意力矩阵的维度为 $\text{head}_i\in\mathbb{R}^{n\times d_{k}}$
 - 拼接与最终投影：将所有头的输出拼接起来，$\text{Concat}(\text{head}_1,...,\text{head}_h)$，与权重矩阵 $W^O$ 做乘积，得到最终的自注意力结果。其中$W^O\in\mathbb{R}^{d_{model}\times d_{model}}$ ，这个步骤的目的是为了统一各个头的注意力尺度。
 $$
-\begin{align}
+\begin{align*}
 \text{MultiHead}(Q,K,V)=\text{Concat}(\text{head}_1,...,\text{head}_h)W^O\\
 where \quad\text{head}_i=\text{Attention}(xW_i^Q,xW_i^K,xW_i^V)
-\end{align}
+\end{align*}
 $$
 
 # Transformer
@@ -53,13 +53,13 @@ Self-Attention虽然考虑了所有的输入向量，但没有考虑到向量的
 本文模型的 Encoder 结构用于从输入序列获取注意力信息，它由 $N=6$ 个 encoder transformer block 堆叠而成。
 在一个 Transformer Block 内，输入数据的**流动路线**为：
 $$
-\begin{align}
+\begin{align*}
 \text{Input} = x_{\ell-1} & \rightarrow \text{Attention}(x_{\ell-1})\\
 & \rightarrow \text{LayerNorm}(x_{\ell-1}+\text{Attention}(x_{\ell-1}))=\hat{x}_{\ell}\\
 & \rightarrow \text{FeedForward}(\hat{x}_{\ell}) \\
 & \rightarrow \text{LayerNorm}(\hat{x}_{\ell} + \text{FFN}(\hat{x}_{\ell}))={x}_{\ell}\\
 & \rightarrow {x}_{\ell} = \text{Output}
-\end{align}
+\end{align*}
 $$
 
 **维度保持**
@@ -77,7 +77,7 @@ $$
 ### Decoder
 本文的 Decoder 结构用于从“已经生成的”部分回答获取注意力信息，结合 Encoder 结构提供的输入的注意力信息，生成对“下一个”输出token的预测。它由 $N=6$ 个 decoder transformer block 堆叠而成，在每个block内数据的流动路线为：
 $$
-\begin{align}
+\begin{align*}
 \text{Input} = x_{\ell-1} & \rightarrow \text{MaskedAttention}(x_{\ell-1})\\
 & \rightarrow \text{LayerNorm}(x_{\ell-1}+\text{MaskedAttention}(x_{\ell-1}))=\tilde{x}_{\ell}\\
 & \rightarrow \text{CrossedAttention}(\tilde{x}_{\ell},z_{enc})\\
@@ -85,7 +85,7 @@ $$
 & \rightarrow \text{FeedForward}(\hat{x}_{\ell}) \\
 & \rightarrow \text{LayerNorm}(\hat{x}_{\ell} + \text{FFN}(\hat{x}_{\ell}))={x}_{\ell}\\
 & \rightarrow {x}_{\ell} = \text{Output}
-\end{align}
+\end{align*}
 $$
 
 与 encoder transformer block有比较大区别的是$\text{MaskedAttention}$ 和 $\text{CrossedAttention}$ 结构。
@@ -95,17 +95,17 @@ $$
 具体方法是，在计算softmax之前，添加上mask矩阵 $M$，它是一个下三角矩阵，所有 $j>i$ 的位置 $M_{ij}=-\infty$，其余位置 $=0$. 被 masked 的自注意力矩阵经过 softmax函数，target token对它位置之后的token的注意力为0.
 ![[Transformer_figure04.png|400]]
 $$
-\text{MaskedAttention}(Q,K,V)=\text{softmax}\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V 
+\text{MaskedAttention}(Q,K,V)=\text{softmax}\left(\frac{QK^{\top}}{\sqrt{d_k}} + M\right)V
 $$
 在训练过程中，一个目标序列可以同时输入，模型会同时计算序列中所有token的预测概率，整个句子的Loss是一次性计算并反向传播的。
 
 **Cross Attention**
 交叉注意力结构将输入序列的信息和已有输出序列的信息结合起来，共同作为预测下一个token的依据。具体计算过程中，Query矩阵来自block上一个Masked注意力矩阵的输出$\tilde{x}_{\ell}$，Key和Value矩阵均来自encoder结构的输出$z_{enc}$.
 $$
-\begin{align}
+\begin{align*}
 & Q = \tilde{x}_{\ell}W^Q\\
 & K = z_{enc}W^K\\
 & V = z_{enc}W^V
-\end{align}
+\end{align*}
 $$
 需要注意的是，$z_{enc}$ 是输入 $x$ 在 Encoder 中经过$N$ 个block完整运算之后得到的输出。
