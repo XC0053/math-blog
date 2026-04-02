@@ -39,7 +39,7 @@ const topicSlug = topic ? topic.toLowerCase().replace(/\s+/g, "-").replace(/[^a-
     {post.data.tags && (
       <div class="tags">
         {post.data.tags.map((tag: string) => (
-          <span class="tag">{tag}</span>
+          <span class="post-tag">{tag}</span>
         ))}
       </div>
     )}

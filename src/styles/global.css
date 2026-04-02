@@ -195,7 +195,7 @@ time {
   margin: .5rem 0 1rem;
 }
 
-.tag {
+.post-tag {
   background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: .25rem;
@@ -334,13 +334,11 @@ th {
   overflow-x: auto;
 }
 
-/* Fix equation number backgrounds */
-.katex-display .tag,
+/* KaTeX equation number cleanup */
 .katex-display .eqn-num {
-  background-color: transparent !important;
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
 }
 
 /* ── Responsive ───────────────────────────────────── */
