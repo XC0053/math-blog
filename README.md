@@ -25,12 +25,14 @@ A personal math and CS notes blog built with [Astro](https://astro.build). Suppo
 ```
 src/
   content/blog/       # Markdown notes organized by topic
+  components/         # Shared Astro layout and category tree components
   pages/
-    index.astro       # Landing page
-    xK9m2p/
-      index.astro     # Blog homepage with topic grid
-      [...id].astro   # Individual note pages
-      topics/[topic].astro  # Topic listing pages
+    index.astro       # Blog homepage
+    [...id].astro     # Individual note pages
+    categories.astro  # Category tree
+    tags.astro        # Tag index
+    writing.astro     # Archive timeline
+    about.astro       # About page
   styles/global.css   # Global stylesheet
 public/
   fonts/              # Custom fonts (KaTeX, LXGW WenKai)
@@ -68,4 +70,101 @@ Your content here...
 npm run dev      # Start dev server
 npm run build    # Build static site to dist/
 npm run preview  # Preview built site locally
+```
+
+## How to Publish a New Note (No AI Needed)
+
+Open a terminal and run these steps:
+
+### 1. Go to the project folder
+
+```bash
+cd E:/vibecoding
+```
+
+### 2. Create a new note
+
+Notes live inside `src/content/blog/<topic>/`. The folder name is the topic.
+
+**Option A: Add to an existing topic** (e.g. "Algorithm Notes")
+
+```bash
+# Create the markdown file
+notepad src/content/blog/algorithm-notes/my-new-note/my-new-note.md
+```
+
+**Option B: Create a brand new topic**
+
+```bash
+# Make a new topic folder first
+mkdir -p src/content/blog/new-topic-name
+notepad src/content/blog/new-topic-name/my-note/my-note.md
+```
+
+### 3. Write the note
+
+Start the file with this frontmatter (the `---` block is required):
+
+```markdown
+---
+title: "My Note Title"
+description: "One-line description"
+pubDate: 2026-04-02
+topic: "Topic Name"
+tags: ["tag1", "tag2"]
+---
+
+# First Heading
+
+Your content here. Use $inline math$ or $$display math$$.
+```
+
+### 4. Add images (if any)
+
+Place images in the matching topic folder:
+
+```bash
+# Copy images to the right spot
+cp /path/to/image.png src/content/blog/algorithm-notes/my-new-note/
+
+# Then reference in markdown with Obsidian syntax:
+# ![[image.png]] or ![[image.png|300]]
+```
+
+### 5. Preview locally
+
+```bash
+npm run dev
+# Open http://localhost:4321/ in your browser
+# Check that everything looks right, then Ctrl+C to stop
+```
+
+### 6. Build and push online
+
+```bash
+npm run build
+git add .
+git commit -m "Add note about X"
+git push
+```
+
+If `git push` fails with a proxy error, run:
+
+```bash
+git -c http.proxy="" -c https.proxy="" push
+```
+
+The site at [chenxr.cloud](https://chenxr.cloud) will update automatically after the push.
+
+### Quick reference: editing existing notes
+
+```bash
+# Edit an existing note
+notepad src/content/blog/algorithm-notes/transformer/transformer.md
+
+# Edit the CSS theme
+notepad src/styles/global.css
+
+# Then build and push
+npm run build && git add . && git commit -m "Update X" && git push
 ```

@@ -1,18 +1,101 @@
 ---
+import { getCollection } from "astro:content";
+import SiteLayout from "../components/SiteLayout.astro";
 import "../styles/global.css";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+
+function excerptFromMarkdown(markdown: string, fallback = "") {
+  const text = markdown
+    .replace(/^---[\s\S]*?---/, "")
+    .replace(/!\[\[[^\]]+\]\]/g, "")
+    .replace(/\[\[([^\]]+)\]\]/g, "$1")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#>*_`$[\]()]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (text || fallback).slice(0, 175);
+}
+
+const topicCounts = new Map<string, number>();
+posts.forEach((post) => {
+  const topic = post.data.topic ?? "Uncategorized";
+  topicCounts.set(topic, (topicCounts.get(topic) ?? 0) + 1);
+});
+
+function slugify(text: string) {
+  return text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+function previewImage(post: (typeof posts)[number]) {
+  const match = post.body.match(/!\[\[([^\]|]+)(?:\|\d+)?\]\]/);
+  if (!match) return null;
+
+  const folder = post.id.split("/").slice(0, -1).join("/");
+  return `/images/${folder}/${match[1]}`;
+}
 ---
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Xiaorui's Blog</title>
-</head>
-<body class="landing">
-  <div class="landing-card">
-    <h1>Hello, welcome to my personal blog.</h1>
-    <p>If you'd like to access my notes, please contact me at:</p>
-    <p class="landing-email">
-      <a href="mailto:chenxiaorui0503@gmail.com">chenxiaorui0503@gmail.com</a>
-    </p>
+<SiteLayout title="Home" active="home">
+  <div id="post-list">
+    {posts.map((post) => {
+      const excerpt = excerptFromMarkdown(post.body, post.data.description);
+      const image = previewImage(post);
+      return (
+        <article class="card-wrapper">
+          <a href={`/${post.id}`} class:list={["post-preview", { "has-preview-img": image }]}>
+            <div class="card-body">
+              <h1 class="card-title">{post.data.title}</h1>
+              <div class="card-text">
+                <p>{excerpt}{excerpt.length >= 175 && "..."}</p>
+              </div>
+              <div class="post-meta">
+                <span>
+                  <img class="icon meta-icon" src="/icons/calendar.svg" alt="" aria-hidden="true" />
+                  {post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+                {post.data.topic && (
+                  <span>
+                    <img class="icon meta-icon" src="/icons/folder.svg" alt="" aria-hidden="true" />
+                    {post.data.topic}
+                  </span>
+                )}
+              </div>
+            </div>
+            {image && (
+              <div class="card-preview-img">
+                <img src={image} alt="" loading="lazy" />
+              </div>
+            )}
+          </a>
+        </article>
+      );
+    })}
   </div>
-</body>
-</html>
+
+  <div slot="panel" class="panel-block">
+    <h2>Recently Updated</h2>
+    <ul>
+      {posts.slice(0, 5).map((post) => (
+        <li>
+          <a class="panel-link" href={`/${post.id}`}>
+            <img class="icon panel-icon" src="/icons/file.svg" alt="" aria-hidden="true" />
+            <span>{post.data.title}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+  <div slot="panel" class="panel-block">
+    <h2>Categories</h2>
+    <div class="tag-cloud">
+      {[...topicCounts.entries()].map(([topic, count]) => (
+        <a href="/categories/">
+          <img class="icon tag-icon" src="/icons/folder.svg" alt="" aria-hidden="true" />
+          {topic}<span>{count}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</SiteLayout>

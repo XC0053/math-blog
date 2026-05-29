@@ -1,0 +1,60 @@
+---
+import { getCollection } from "astro:content";
+import SiteLayout from "../components/SiteLayout.astro";
+import CategoryTree from "../components/CategoryTree.astro";
+import "../styles/global.css";
+
+const posts = (await getCollection("blog")).sort((a, b) =>
+  a.id.localeCompare(b.id)
+);
+
+function titleCase(segment: string) {
+  return segment
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function makeNode(label: string) {
+  return { label, children: [], posts: [] };
+}
+
+const roots: any[] = [];
+
+function childFor(nodes: any[], label: string) {
+  let node = nodes.find((item) => item.label === label);
+  if (!node) {
+    node = makeNode(label);
+    nodes.push(node);
+  }
+  return node;
+}
+
+posts.forEach((post) => {
+  const parts = post.id.split("/");
+  const dirs = parts.slice(0, -1);
+  let level = roots;
+
+  dirs.forEach((segment) => {
+    const node = childFor(level, titleCase(segment));
+    level = node.children;
+  });
+
+  if (dirs.length === 0) {
+    const node = childFor(roots, "Notes");
+    node.posts.push(post);
+  } else {
+    const leaf = childFor(roots, titleCase(dirs[0]));
+    let node = leaf;
+    for (const segment of dirs.slice(1)) {
+      node = childFor(node.children, titleCase(segment));
+    }
+    node.posts.push(post);
+  }
+});
+---
+<SiteLayout title="Categories" active="categories">
+  <h1 class="dynamic-title">Categories</h1>
+  <CategoryTree nodes={roots} />
+</SiteLayout>

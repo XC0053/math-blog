@@ -1,0 +1,53 @@
+---
+const { nodes, depth = 0 } = Astro.props;
+
+function countPosts(node: any): number {
+  return node.posts.length + node.children.reduce((sum: number, child: any) => sum + countPosts(child), 0);
+}
+
+function summaryText(node: any) {
+  const parts = [];
+  const categoryCount = node.children.length;
+  const postCount = countPosts(node);
+
+  if (categoryCount > 0) {
+    parts.push(`${categoryCount} ${categoryCount === 1 ? "category" : "categories"}`);
+  }
+  if (postCount > 0) {
+    parts.push(`${postCount} ${postCount === 1 ? "post" : "posts"}`);
+  }
+
+  return parts.join(", ");
+}
+---
+<ul class:list={["category-tree", { "category-tree-root": depth === 0 }]}>
+  {nodes.map((node: any) => (
+    <li class="category-item">
+      <details class="category-details">
+        <summary class="category-summary">
+          <span class="category-node-label">
+            <img class="icon category-icon" src={node.children.length > 0 ? "/icons/folder-open.svg" : "/icons/folder.svg"} alt="" aria-hidden="true" />
+            <span class="category-name">{node.label}</span>
+            {summaryText(node) && <span class="category-summary-meta">{summaryText(node)}</span>}
+          </span>
+          <span class="category-caret" aria-hidden="true"></span>
+        </summary>
+
+        {node.children.length > 0 && <Astro.self nodes={node.children} depth={depth + 1} />}
+
+        {node.posts.length > 0 && (
+          <ul class="category-posts">
+            {node.posts.map((post: any) => (
+              <li>
+                <a class="category-post-link" href={`/${post.id}`}>
+                  <img class="icon category-icon" src="/icons/file.svg" alt="" aria-hidden="true" />
+                  <span>{post.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
+    </li>
+  ))}
+</ul>

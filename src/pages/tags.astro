@@ -1,0 +1,194 @@
+---
+import { getCollection } from "astro:content";
+import SiteLayout from "../components/SiteLayout.astro";
+import "../styles/global.css";
+
+const posts = await getCollection("blog");
+const tagMap = new Map<string, typeof posts>();
+
+posts.forEach((post) => {
+  for (const tag of post.data.tags ?? []) {
+    if (!tagMap.has(tag)) tagMap.set(tag, []);
+    tagMap.get(tag)!.push(post);
+  }
+});
+
+const tags = [...tagMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+function tagLevel(count: number) {
+  if (count <= 4) return 1;
+  if (count <= 8) return 2;
+  if (count <= 12) return 3;
+  if (count <= 16) return 4;
+  if (count <= 20) return 5;
+  if (count <= 30) return 6;
+  return 7;
+}
+
+const tagData = {
+  tags: tags.map(([tag, tagPosts]) => ({ tag, count: tagPosts.length })),
+  posts: posts.map((post) => ({
+    title: post.data.title,
+    href: `/${post.id}`,
+    date: post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+    tags: post.data.tags ?? [],
+  })),
+};
+---
+<SiteLayout title="Tags" active="tags">
+  <h1 class="dynamic-title">Tags</h1>
+  {tags.length > 0 ? (
+    <div class="tags-page" data-tag-browser>
+      <div class="selected-tags" data-selected-tags hidden></div>
+
+      <div class="tag-cards" data-tag-list>
+        {tags.map(([tag, tagPosts]) => (
+          <a class={`tag-card tag-level-${tagLevel(tagPosts.length)}`} href={`/tags/?tag=${encodeURIComponent(tag)}`}>
+            <span>{tag}</span>
+            <span class="tag-count">{tagPosts.length}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="tag-results" data-tag-results hidden></div>
+    </div>
+  ) : (
+    <p class="empty-state">No tags yet.</p>
+  )}
+
+  <script type="application/json" id="tag-data" set:html={JSON.stringify(tagData)} />
+  <script>
+    const dataEl = document.getElementById("tag-data");
+    const browser = document.querySelector("[data-tag-browser]");
+    const selectedEl = document.querySelector("[data-selected-tags]");
+    const tagListEl = document.querySelector("[data-tag-list]");
+    const resultsEl = document.querySelector("[data-tag-results]");
+    const data = dataEl ? JSON.parse(dataEl.textContent || "{}") : { tags: [], posts: [] };
+
+    function hrefFor(tags) {
+      const params = new URLSearchParams();
+      tags.forEach((tag) => params.append("tag", tag));
+      const query = params.toString();
+      return query ? `/tags/?${query}` : "/tags/";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function selectedTags() {
+      const params = new URLSearchParams(window.location.search);
+      const knownTags = new Set(data.tags.map((item) => item.tag));
+      return params.getAll("tag").filter((tag, index, arr) =>
+        knownTags.has(tag) && arr.indexOf(tag) === index
+      );
+    }
+
+    function matchingPosts(selected) {
+      if (selected.length === 0) return [];
+      return data.posts.filter((post) => selected.every((tag) => post.tags.includes(tag)));
+    }
+
+    function candidateTags(selected, posts) {
+      const counts = new Map();
+      const selectedSet = new Set(selected);
+      const source = selected.length === 0 ? data.posts : posts;
+
+      source.forEach((post) => {
+        post.tags.forEach((tag) => {
+          if (!selectedSet.has(tag)) {
+            counts.set(tag, (counts.get(tag) || 0) + 1);
+          }
+        });
+      });
+
+      return [...counts.entries()]
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => a.tag.localeCompare(b.tag));
+    }
+
+    function tagLevel(count) {
+      if (count <= 4) return 1;
+      if (count <= 8) return 2;
+      if (count <= 12) return 3;
+      if (count <= 16) return 4;
+      if (count <= 20) return 5;
+      if (count <= 30) return 6;
+      return 7;
+    }
+
+    function renderTagCard(tag, count, selected) {
+      const nextTags = [...selected, tag];
+      return `<a class="tag-card tag-level-${tagLevel(count)}" href="${hrefFor(nextTags)}"><span>${escapeHtml(tag)}</span><span class="tag-count">${count}</span></a>`;
+    }
+
+    function renderSelected(selected) {
+      if (!selectedEl) return;
+      if (selected.length === 0) {
+        selectedEl.hidden = true;
+        selectedEl.innerHTML = "";
+        return;
+      }
+
+      selectedEl.hidden = false;
+      selectedEl.innerHTML = selected.map((tag) => {
+        const remaining = selected.filter((item) => item !== tag);
+        return `<a class="selected-tag" href="${hrefFor(remaining)}"><span>${escapeHtml(tag)}</span><span aria-hidden="true">x</span></a>`;
+      }).join("");
+    }
+
+    function renderResults(posts) {
+      if (!resultsEl) return;
+      if (posts.length === 0) {
+        resultsEl.hidden = true;
+        resultsEl.innerHTML = "";
+        return;
+      }
+
+      resultsEl.hidden = false;
+      resultsEl.innerHTML = `
+        <ul class="tag-post-list">
+          ${posts.map((post) => `
+            <li>
+              <a class="tag-post-link" href="${post.href}">
+                <img class="icon category-icon" src="/icons/file.svg" alt="" aria-hidden="true" />
+                <span>${escapeHtml(post.title)}</span>
+              </a>
+              <span class="tag-post-date">${escapeHtml(post.date)}</span>
+            </li>
+          `).join("")}
+        </ul>
+      `;
+    }
+
+    function render() {
+      if (!browser || !tagListEl) return;
+      const selected = selectedTags();
+      const posts = matchingPosts(selected);
+      const candidates = candidateTags(selected, posts);
+
+      renderSelected(selected);
+      tagListEl.innerHTML = candidates.map((item) =>
+        renderTagCard(item.tag, item.count, selected)
+      ).join("");
+      renderResults(posts);
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const link = target?.closest(".tag-card, .selected-tag");
+      if (!(link instanceof HTMLAnchorElement) || !link.href.includes("/tags/")) return;
+      event.preventDefault();
+      history.pushState(null, "", link.href);
+      render();
+    });
+
+    window.addEventListener("popstate", render);
+    render();
+  </script>
+</SiteLayout>

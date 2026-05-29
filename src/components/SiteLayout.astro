@@ -1,0 +1,85 @@
+---
+const {
+  title = "Home",
+  description = "Math and CS notes",
+  active = "home",
+} = Astro.props;
+
+const pageTitle =
+  title === "Home" ? "Xiaorui's Blog | Math and CS notes" : `${title} | Xiaorui's Blog`;
+
+const navItems = [
+  { key: "home", href: "/", icon: "home", label: "Home" },
+  { key: "categories", href: "/categories/", icon: "categories", label: "Categories" },
+  { key: "tags", href: "/tags/", icon: "tag", label: "Tags" },
+  { key: "archives", href: "/writing/", icon: "archive", label: "Archives" },
+  { key: "about", href: "/about/", icon: "info", label: "About" },
+];
+
+function iconPath(name: string) {
+  return `/icons/${name || "question"}.svg`;
+}
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{pageTitle}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <meta name="description" content={description} />
+    <link rel="stylesheet" href="/katex.min.css" />
+  </head>
+  <body>
+    <aside aria-label="Sidebar" id="sidebar">
+      <header class="profile-wrapper">
+        <a href="/" id="avatar" aria-label="Home">
+          <img src="/avatar.jpg" alt="Xiaorui" />
+        </a>
+        <a class="site-title" href="/">Xiaorui's Blog</a>
+        <p class="site-subtitle">Math and CS notes</p>
+      </header>
+
+      <nav aria-label="Main navigation">
+        <ul class="nav-list">
+          {navItems.map((item) => (
+            <li class:list={["nav-item", { active: active === item.key }]}>
+              <a href={item.href} class="nav-link">
+                <img class="icon nav-icon" src={iconPath(item.icon)} alt="" aria-hidden="true" />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </aside>
+
+    <div id="main-wrapper">
+      <div class="main-container">
+        <header id="topbar-wrapper">
+          <div id="topbar">
+            <div id="topbar-title">{title}</div>
+            <nav id="breadcrumb" aria-label="Breadcrumb">
+              <a href="/">Home</a>
+              {title !== "Home" && <span>{title}</span>}
+            </nav>
+          </div>
+        </header>
+
+        <div class="content-row">
+          <main aria-label="Main Content" class="main-content">
+            <slot />
+          </main>
+          <aside aria-label="Panel" id="panel-wrapper">
+            <slot name="panel" />
+          </aside>
+        </div>
+
+        <footer id="tail-wrapper">
+          <div class="footer">
+            <p>Xiaorui's Blog</p>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
