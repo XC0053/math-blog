@@ -32,7 +32,7 @@ $$
 $$
 \begin{bmatrix} \sin(\omega(i+t))\\ \cos(\omega(i+t)) \end{bmatrix} = \begin{bmatrix} \cos(\omega t) & \sin(\omega t)\\ -\sin(\omega t) & \cos(\omega t) \end{bmatrix} \begin{bmatrix} \sin(\omega i)\\ \cos(\omega i) \end{bmatrix}
 $$
-	因此从位置 $i$ 的编码，可以通过一个只依赖相对距离 $t$ 的线性变换，得到位置 $i+t$ 的编码。
+因此从位置 $i$ 的编码，可以通过一个只依赖相对距离 $t$ 的线性变换，得到位置 $i+t$ 的编码。
 它的缺点是，位置向量和 token embedding 直接相加，内容信息和位置信息在输入层就被混合在一起，模型需要自己学习如何使用位置结构。此外，它本质上仍然是绝对位置编码；虽然相对位移可以通过三角函数结构线性表示，但 attention score 并没有显式地只依赖相对距离，因此长上下文外推并不一定稳定。
 
 # Rotary Positional Embedding (RoPE)
@@ -62,7 +62,8 @@ $$
 那么 attention score 为：
 $$
 s_{ij} = \frac{\tilde{q}_i^{\top}\tilde{k}_j}{\sqrt{d_k}} = \frac{(R_iq_i)^{\top}(R_j k_j)}{\sqrt{d_k}}
- = \frac{q_i^{\top} R_i^{\top }R_jk_j}{\sqrt{d_k}} = \frac{q_i^{\top}R_{j-i}k_j}{\sqrt{d_k}}$$
+ = \frac{q_i^{\top} R_i^{\top }R_jk_j}{\sqrt{d_k}} = \frac{q_i^{\top}R_{j-i}k_j}{\sqrt{d_k}}
+ $$
  因为二维旋转矩阵满足 $R(\alpha)^{\top}R(\beta) = R(\beta-\alpha)$，所以旋转矩阵满足 $R_i^{\top }R_j = R_{j-i}$
  
  RoPE 的优点是：
