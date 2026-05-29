@@ -23,7 +23,23 @@
       "Bash(git:*)",
       "Bash(cp:*)",
       "Bash(npm uninstall:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl -sL \"https://api.github.com/repos/poole/poole/git/trees/master?recursive=1\")",
+      "Bash(curl:*)",
+      "Bash(head:*)",
+      "Bash(grep -E '\\\\.\\(ttf|woff2|woff\\)$')",
+      "Bash(grep -oE '.{0,100}eqn-num.{0,100}' \"E:/vibecoding/dist/xK9m2p/algorithm-notes/normalization-methods/normalization-methods/index.html\")",
+      "Bash(grep -oE '.{0,200}class=\"tag\".{0,200}' \"E:/vibecoding/dist/xK9m2p/algorithm-notes/normalization-methods/normalization-methods/index.html\")",
+      "Bash(grep -oE '.{0,100}class=\"tag\".{0,100}' \"E:/vibecoding/dist/xK9m2p/algorithm-notes/transformer/transformer/index.html\")",
+      "Bash(grep -oE '.{0,150}katex-display.{0,150}' \"E:/vibecoding/dist/xK9m2p/algorithm-notes/transformer/transformer/index.html\")",
+      "Bash(grep -oE '.{0,50}class=\"tag\".{0,300}' \"E:/vibecoding/dist/xK9m2p/algorithm-notes/normalization-methods/normalization-methods/index.html\")",
+      "Bash(grep -oE '.{0,50}eqn-num.{0,100}' \"E:/vibecoding/public/katex.min.css\")",
+      "Bash(grep -oE '.{0,20}mml-eqn-num.{0,200}' \"E:/vibecoding/public/katex.min.css\")",
+      "Bash(grep -oE '.{0,30}katexEqnNo.{0,100}' \"E:/vibecoding/public/katex.min.css\")",
+      "Bash(grep -oE '.{0,30}counter-reset.{0,100}' \"E:/vibecoding/public/katex.min.css\")",
+      "Bash(grep -oE '.{0,30}\\\\.tag[^-].{0,200}' \"E:/vibecoding/public/katex.min.css\")",
+      "Bash(npx playwright:*)",
+      "Bash(node -e ':*)"
     ]
   }
 }
