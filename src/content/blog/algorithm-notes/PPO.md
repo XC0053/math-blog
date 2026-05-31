@@ -14,7 +14,7 @@ PPO 可以理解为一种更稳定的 Policy Gradient 方法。它的核心问�
 3. PPO 在使用 advantage 更新策略时，通过 clipping 限制策略变化幅度。
 
 # PPO 数学公式推理
-##### 从 Policy Gradient 到 Advantage
+### 从 Policy Gradient 到 Advantage
 
 上接 [[Policy Gradient]] 笔记，Policy Gradient 的基本形式可以写成：
 $$
@@ -224,7 +224,7 @@ $$
 \sum_{l=0}^{T-t-1}(\gamma\lambda)^l\delta_{t+l}.
 $$
 ### 为什么通常估计 $V^{\pi}(s_t)$ 而不是 $Q^\pi(s_t,a_t)$
- 
+
  Advantage 的定义是 $A^\pi(s_t,a_t)=Q^\pi(s_t,a_t)-V^\pi(s_t)$。理论上可以直接估计 $Q^\pi(s_t,a_t)$，但在 PPO / Actor-Critic 中通常估计 $V^\pi(s_t)$。
 
 原因是 $V(s)$ 只需要输入状态，学习“当前策略平均来说这个状态值多少钱”。而 $Q(s,a)$ 需要同时输入状态和动作，学习“在这个状态下选择某个具体动作值多少钱”。在高维动作空间、连续动作空间，尤其是语言模型的 token 空间中，直接估计 $Q(s,a)$ 更困难，也更难覆盖所有动作。
