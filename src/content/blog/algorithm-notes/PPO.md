@@ -1,6 +1,6 @@
 ---
 title: Proximal Policy Optimization (PPO)
-description:
+description: PPO 可以理解为一种更稳定的 Policy Gradient 方法，通过 clipping 限制策略更新幅度。
 pubDate: 2026-05-31
 topic: Algorithm Notes
 tags:
@@ -13,7 +13,7 @@ PPO 可以理解为一种更稳定的 Policy Gradient 方法。它的核心问�
 2. Actor-Critic 用 advantage 作为动作好坏的估计。
 3. PPO 在使用 advantage 更新策略时，通过 clipping 限制策略变化幅度。
 
-### PPO 数学公式推理
+# PPO 数学公式推理
 ##### 从 Policy Gradient 到 Advantage
 
 上接 [[Policy Gradient]] 笔记，Policy Gradient 的基本形式可以写成：
@@ -24,7 +24,7 @@ $$
 
 最原始的 REINFORCE 方法直接令 $\Psi_t=R(\tau)$，也就是用整条轨迹的总回报评价每一步动作。但这太粗糙，因为一条轨迹最终奖励高，并不代表其中每一步动作都好。
 ****
-##### 从整条轨迹 reward 到 reward-to-go
+### 从整条轨迹 reward 到 reward-to-go
 
 为了让第 t 步动作只对它之后的结果负责，可以使用从当前时刻开始的折扣回报 $G_t=\sum_{l=0}^{T-t-1}\gamma^l r_{t+l}$，也可以递归写成
 $$
@@ -34,7 +34,7 @@ $$
 
 但是 $G_t$ 仍然是单条采样轨迹上的实际回报，随机性很强。如果直接用它作为动作好坏的估计，梯度方差会比较大。
 ****
-##### 从 reward-to-go 到 advantage
+### 从 reward-to-go 到 advantage
 
 为了更精确地判断一个动作是否值得增强，引入动作价值函数和状态价值函数。
 
@@ -55,7 +55,7 @@ A^\pi(s_t,a_t)
 \right].
 $$
 ****
-##### PPO 中如何估计 advantage
+### PPO 中如何估计 advantage
 
 真实的 $Q^\pi(s_t,a_t)$ 和 $V^\pi(s_t)$ 都无法直接知道，因为它们都是对未来所有可能轨迹的期望。在 PPO / Actor-Critic 中，通常训练一个 critic 来估计状态价值函数，即 $V_\phi(s_t)\approx V^\pi(s_t)$。
 
@@ -67,7 +67,7 @@ $$
 
 另一种极端做法是使用完整的 reward-to-go，即 $\hat{A}^{\mathrm{full}}_t=G_t-V_\phi(s_t)$。这种方法更少依赖 critic 的 bootstrap 估计，但是 $G_t$ 来自一整条采样轨迹，轨迹本身随机性很强，因此方差较大。
 ****
-##### GAE：在单步 TD 和完整回报之间折中
+### GAE：在单步 TD 和完整回报之间折中
 
 为了平衡单步 TD error 和完整 reward-to-go，可以使用 n-step advantage estimator。它使用前 $n$ 步真实奖励，然后用 critic 估计第 $n$ 步之后的长期价值：
 $$
@@ -96,7 +96,7 @@ $$
 因此 GAE 的作用是：给 PPO 提供一个更稳定的 advantage 估计。
 
 ****
-##### PPO 为什么要限制策略更新幅度
+### PPO 为什么要限制策略更新幅度
 
 有了 advantage 之后，策略更新的直觉是：如果 $\hat{A}_t>0$，提高 $\pi_\theta(a_t\mid s_t)$；如果 $\hat{A}_t<0$，降低 $\pi_\theta(a_t\mid s_t)$。
 
@@ -133,7 +133,7 @@ $$
 如果 advantage 为正，PPO 不允许策略无限制地提高该动作概率。如果 advantage 为负，PPO 不允许策略无限制地降低该动作概率。因此 PPO 的核心不是单纯“提高好动作概率、降低坏动作概率”，而是在这个过程中限制每次策略更新的幅度，使训练更加稳定。
 
 ****
-##### PPO 的整体训练逻辑
+### PPO 的整体训练逻辑
 
 PPO 的整体流程可以概括为：
 
@@ -158,8 +158,8 @@ r_t(\theta)\hat{A}_t,
 $$
 整体上，PPO 可以概括为：Policy Gradient + Advantage Estimation + Clipped Policy Update。
 
-### 细节解释
-#### 从 Advantage 推到 TD Error
+# 细节解释
+### 从 Advantage 推到 TD Error
 这一部分说明为什么 TD error 可以作为 advantage 的单步采样估计。
 
 根据定义，$A^\pi(s_t,a_t)=Q^\pi(s_t,a_t)-V^\pi(s_t)$。又因为 $Q^\pi(s_t,a_t)=\mathbb{E}_{\pi}[G_t\mid s_t,a_t]$，所以 $A^\pi(s_t,a_t)=\mathbb{E}_{\pi}[G_t\mid s_t,a_t]-V^\pi(s_t)$。
@@ -193,7 +193,7 @@ r_t+\gamma V^\pi(s_{t+1})-V^\pi(s_t)
 $$
 定义单步 TD error 为 $\delta_t=r_t+\gamma V^\pi(s_{t+1})-V^\pi(s_t)$，于是得到 $A^\pi(s_t,a_t)=\mathbb{E}[\delta_t\mid s_t,a_t]$。这说明 TD error 的条件期望等于真实 advantage，因此单步 TD error 可以看成 advantage 的单步采样估计。
 
-#### $n$-step Advantage 与 GAE 展开
+### $n$-step Advantage 与 GAE 展开
 单步 advantage 估计为 $\hat{A}^{(1)}_t=\delta_t=r_t+\gamma V(s_{t+1})-V(s_t)$。
 
 两步 TD error 的展开为：
@@ -223,7 +223,7 @@ $$
 =
 \sum_{l=0}^{T-t-1}(\gamma\lambda)^l\delta_{t+l}.
 $$
-#### 为什么通常估计 $V^{\pi}(s_t)$ 而不是 $Q^\pi(s_t,a_t)$
+### 为什么通常估计 $V^{\pi}(s_t)$ 而不是 $Q^\pi(s_t,a_t)$
  
  Advantage 的定义是 $A^\pi(s_t,a_t)=Q^\pi(s_t,a_t)-V^\pi(s_t)$。理论上可以直接估计 $Q^\pi(s_t,a_t)$，但在 PPO / Actor-Critic 中通常估计 $V^\pi(s_t)$。
 
