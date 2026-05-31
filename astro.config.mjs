@@ -4,19 +4,40 @@ import rehypeKatex from "rehype-katex";
 
 import cloudflare from "@astrojs/cloudflare";
 
-// Convert Obsidian ![[image.png]] and ![[image.png|width]] in raw text to <img>
-// Must run as a rehype plugin to catch cases where remark already parsed ![[ into broken nodes
-function rehypeObsidianImages() {
+function slugifyPath(path) {
+  return path
+    .split(/[\\/]/)
+    .filter(Boolean)
+    .map((segment) =>
+      segment
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "")
+    )
+    .join("/");
+}
+
+function imagePath(base, filename) {
+  return [base, filename]
+    .filter(Boolean)
+    .join("/")
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+// Convert Obsidian ![[image.png]] and [[wikilink]] before markdown rendering.
+function remarkObsidianSyntax() {
   return function (tree, file) {
     const srcPath = file.history && file.history[0] ? file.history[0] : "";
     const blogMatch = srcPath.match(/[/\\]blog[/\\](.+)[/\\]/);
-    const imgBase = blogMatch ? "/images/" + blogMatch[1].replace(/\\/g, "/") : "";
+    const imgBase = blogMatch ? "/images/" + slugifyPath(blogMatch[1]) : "";
 
     const visit = function (node) {
       if (node.children) {
         const newChildren = [];
         for (const child of node.children) {
-          // Handle text nodes containing Obsidian image syntax
           if (child.type === "text") {
             const regex = /!\[\[([^\]|]+)(?:\|(\d+))?\]\]/g;
             let lastIndex = 0;
@@ -27,18 +48,17 @@ function rehypeObsidianImages() {
               if (match.index > lastIndex) {
                 newChildren.push({ type: "text", value: child.value.slice(lastIndex, match.index) });
               }
-              const imgSrc = imgBase ? imgBase + "/" + match[1] : match[1];
-              const widthAttr = match[2] ? ' width="' + match[2] + '"' : "";
+              const imgSrc = imagePath(imgBase, match[1]);
               newChildren.push({
-                type: "element",
-                tagName: "img",
-                properties: {
-                  src: imgSrc,
-                  alt: "",
-                  style: "max-width:100%;height:auto;display:block;margin:1.5rem 0",
-                  ...(match[2] ? { width: match[2] } : {}),
+                type: "image",
+                url: imgSrc,
+                alt: "",
+                data: {
+                  hProperties: {
+                    style: "max-width:100%;height:auto;display:block;margin:1.5rem 0",
+                    ...(match[2] ? { width: match[2] } : {}),
+                  },
                 },
-                children: [],
               });
               lastIndex = regex.lastIndex;
             }
@@ -48,7 +68,6 @@ function rehypeObsidianImages() {
               }
               continue;
             }
-            // Convert [[wikilink]] to plain text
             if (/\[\[([^\]]+)\]\]/.test(child.value)) {
               child.value = child.value.replace(/\[\[([^\]]+)\]\]/g, "$1");
             }
@@ -63,13 +82,15 @@ function rehypeObsidianImages() {
   };
 }
 
+const isDev = process.env.npm_lifecycle_event === "dev";
+
 export default defineConfig({
   site: "https://chenxr.cloud",
 
   markdown: {
-    remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeKatex, rehypeObsidianImages],
+    remarkPlugins: [remarkObsidianSyntax, remarkMath],
+    rehypePlugins: [rehypeKatex],
   },
 
-  adapter: cloudflare()
+  adapter: isDev ? undefined : cloudflare(),
 });

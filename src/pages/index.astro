@@ -88,10 +88,10 @@ function previewImage(post: (typeof posts)[number]) {
     </ul>
   </div>
   <div slot="panel" class="panel-block">
-    <h2>Categories</h2>
+    <h2>Archives</h2>
     <div class="tag-cloud">
       {[...topicCounts.entries()].map(([topic, count]) => (
-        <a href="/categories/">
+        <a href="/archives/">
           <img class="icon tag-icon" src="/icons/folder.svg" alt="" aria-hidden="true" />
           {topic}<span>{count}</span>
         </a>

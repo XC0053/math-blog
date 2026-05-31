@@ -1,0 +1,178 @@
+---
+import { getCollection } from "astro:content";
+import SiteLayout from "../components/SiteLayout.astro";
+import "../styles/global.css";
+
+const posts = (await getCollection("blog")).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+
+const grouped = posts.reduce((years, post) => {
+  const year = post.data.pubDate.getFullYear();
+  if (!years.has(year)) years.set(year, []);
+  years.get(year)!.push(post);
+  return years;
+}, new Map<number, typeof posts>());
+
+const dayPosts = new Map<string, typeof posts>();
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+posts.forEach((post) => {
+  const key = dateKey(post.data.pubDate);
+  if (!dayPosts.has(key)) dayPosts.set(key, []);
+  dayPosts.get(key)!.push(post);
+});
+
+const latestPostDate = posts[0]?.data.pubDate;
+const today = startOfDay(new Date());
+const heatmapEnd = startOfDay(
+  latestPostDate && latestPostDate.getTime() > today.getTime() ? latestPostDate : today
+);
+const heatmapStart = new Date(heatmapEnd);
+heatmapStart.setMonth(heatmapStart.getMonth() - 8);
+heatmapStart.setDate(heatmapStart.getDate() + 1);
+
+const gridStart = new Date(heatmapStart);
+gridStart.setDate(heatmapStart.getDate() - heatmapStart.getDay());
+
+const gridEnd = new Date(heatmapEnd);
+gridEnd.setDate(heatmapEnd.getDate() + (6 - heatmapEnd.getDay()));
+
+const weeks: Array<Array<{
+  date: Date;
+  key: string;
+  count: number;
+  posts: typeof posts;
+  inRange: boolean;
+  level: number;
+}>> = [];
+
+for (let date = new Date(gridStart); date <= gridEnd; date.setDate(date.getDate() + 1)) {
+  const current = new Date(date);
+  const key = dateKey(current);
+  const items = dayPosts.get(key) ?? [];
+  const count = items.length;
+  const inRange = current >= heatmapStart && current <= heatmapEnd;
+  const level = !inRange || count === 0 ? 0 : Math.min(count, 4);
+  const weekIndex = Math.floor((current.getTime() - gridStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
+  if (!weeks[weekIndex]) weeks[weekIndex] = [];
+  weeks[weekIndex].push({ date: current, key, count, posts: items, inRange, level });
+}
+
+const monthMarkers = weeks
+  .map((week, index) => ({ week, index }))
+  .filter(({ week, index }) => {
+    const firstInMonth = week.find((day) => day.date.getDate() <= 7 && day.inRange);
+    if (!firstInMonth) return false;
+    const previousWeek = weeks[index - 1];
+    return !previousWeek || previousWeek.every((day) => day.date.getMonth() !== firstInMonth.date.getMonth());
+  })
+  .map(({ week, index }) => ({
+    label: week.find((day) => day.date.getDate() <= 7 && day.inRange)!.date.toLocaleDateString("en-US", { month: "short" }),
+    column: index + 1,
+  }));
+
+const totalPosts = posts.length;
+const activeDays = [...dayPosts.keys()].filter((key) => {
+  const date = startOfDay(new Date(`${key}T00:00:00`));
+  return date >= heatmapStart && date <= heatmapEnd;
+}).length;
+---
+<SiteLayout title="Calendar" active="calendar">
+  <div class="archives-page">
+    <section class="archives-timeline" aria-labelledby="calendar-title">
+      <h1 id="calendar-title" class="dynamic-title">Calendar</h1>
+      <ul id="archives">
+        {[...grouped.entries()].map(([year, yearPosts]) => (
+          <>
+            <h3>{year}</h3>
+            {yearPosts.map((post) => (
+              <li>
+                <span class="archive-date">
+                  {post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+                <a href={`/${post.id}`}>{post.data.title}</a>
+                {post.data.topic && (
+                  <span class="archive-category">
+                    <img class="icon meta-icon" src="/icons/folder.svg" alt="" aria-hidden="true" />
+                    {post.data.topic}
+                  </span>
+                )}
+              </li>
+            ))}
+          </>
+        ))}
+      </ul>
+    </section>
+
+    <section class="archive-heatmap" aria-labelledby="heatmap-title">
+      <div class="archive-heatmap-header">
+        <h2 id="heatmap-title">Calendar Activity</h2>
+        <p>{totalPosts} posts across {activeDays} active days</p>
+      </div>
+
+      <div class="heatmap-scroll">
+        <div class="heatmap-grid" style={`--week-count: ${weeks.length}`}>
+          <div class="heatmap-months-viewport" aria-hidden="true">
+            <div class="heatmap-months">
+              {monthMarkers.map((marker) => (
+                <span style={`grid-column: ${marker.column}`}>{marker.label}</span>
+              ))}
+            </div>
+          </div>
+          <div class="heatmap-weekdays" aria-hidden="true">
+            <span></span>
+            <span>Mon</span>
+            <span></span>
+            <span>Wed</span>
+            <span></span>
+            <span>Fri</span>
+            <span></span>
+          </div>
+          <div class="heatmap-days-viewport">
+            <div class="heatmap-days" aria-label="Daily writing activity">
+              {weeks.map((week) => (
+                <div class="heatmap-week">
+                  {week.map((day) => {
+                    const title = day.count === 0
+                      ? `No posts on ${formatDate(day.date)}`
+                      : `${day.count} ${day.count === 1 ? "post" : "posts"} on ${formatDate(day.date)}`;
+                    const firstPost = day.posts[0];
+                    return firstPost ? (
+                      <a
+                        class:list={["heatmap-cell", `heatmap-level-${day.level}`, { "is-outside-range": !day.inRange }]}
+                        href={`/${firstPost.id}`}
+                        aria-label={title}
+                        title={title}
+                      ></a>
+                    ) : (
+                      <span
+                        class:list={["heatmap-cell", `heatmap-level-${day.level}`, { "is-outside-range": !day.inRange }]}
+                        aria-label={title}
+                        title={title}
+                      ></span>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</SiteLayout>

@@ -11,7 +11,7 @@ function summaryText(node: any) {
   const postCount = countPosts(node);
 
   if (categoryCount > 0) {
-    parts.push(`${categoryCount} ${categoryCount === 1 ? "category" : "categories"}`);
+    parts.push(`${categoryCount} ${categoryCount === 1 ? "archive" : "archives"}`);
   }
   if (postCount > 0) {
     parts.push(`${postCount} ${postCount === 1 ? "post" : "posts"}`);
